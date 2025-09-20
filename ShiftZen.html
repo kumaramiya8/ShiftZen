@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Team Scheduler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    </style>
+</head>
+<body class="bg-slate-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- Helper Icons (as SVG components) ---
+        const UserPlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="23" y2="17"/><line x1="20" y1="14" x2="26" y2="14"/></svg>;
+        const EditIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+        const SaveIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>;
+        const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+        const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+        const ListIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>;
+        const XIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>;
+        const RefreshCwIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>;
+        const RepeatIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>;
+        const ChevronsUpDown = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>;
+        const ChevronUpIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>;
+        const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>;
+        const AssignIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>;
+        const ChevronLeftIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>;
+        const ChevronRightIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>;
+        const ClipboardListIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>;
+        const TableIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18M3 9h18M3 15h18M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg>;
+        const CopyIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>;
+        const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+        const MinusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+        const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const DownloadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+        const UploadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+        const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>;
+        const CameraIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>;
+        const AlertTriangleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+        const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+        const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>;
+
+        // --- Constants & Initial Data ---
+        const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+        const INITIAL_AGENTS_DATA = [
+            "Sameera Tumuluri", "Vasista Gaggaiah Vemuri", "Sreevani Dasari", "Syeda Zainab Haider",
+            "Tejas Thaker", "Bhavesh Rohera", "Anirudh Mukherjee", "Jai Katare", "Arjun Bhatia",
+            "Raza Razvi", "Kumar Amiya", "Soumyajyoti Das", "PGC Vikram", "Sai Kiran",
+            "Mithinti Durga Sai Rohan", "Pooja Goud", "Bhavana Mudunuri", "Anshul Srivastava",
+            "Sankalp Padhi", "Chakraborty Ayush Aseem", "Rahul Singh", "Ayush Das", "Satvik",
+            "Sachin", "Nithin Anil Kumar", "Sangeeth Mohan", "Rahul Sharma", "Karan Singh"
+        ];
+
+        const AGENT_ROLES = {
+            "Sameera Tumuluri": "L1", "Vasista Gaggaiah Vemuri": "L1", "Sreevani Dasari": "L1", "Syeda Zainab Haider": "L1", "Tejas Thaker": "L1", "Bhavesh Rohera": "L1", "Anirudh Mukherjee": "L1", "Jai Katare": "L1", "Arjun Bhatia": "L1", "Raza Razvi": "L1", "Kumar Amiya": "L1", "Soumyajyoti Das": "L1", "PGC Vikram": "L1", "Sai Kiran": "L1", "Mithinti Durga Sai Rohan": "L1", "Pooja Goud": "L1", "Bhavana Mudunuri": "L1", "Anshul Srivastava": "L2", "Sankalp Padhi": "L2", "Chakraborty Ayush Aseem": "L2", "Rahul Singh": "L2", "Ayush Das": "L2", "Satvik": "L2", "Sachin": "L2.5", "Nithin Anil Kumar": "L2.5", "Sangeeth Mohan": "L3", "Rahul Sharma": "L3", "Karan Singh": "L3"
+        };
+
+        const AGENT_SBR_MAP = {
+            "Sameera Tumuluri": [], "Vasista Gaggaiah Vemuri": ["Support Aveda", "Support Hyper Connect SBR", "Support Liabilities SBR", "Support Inventory SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR"], "Sreevani Dasari": ["Support Liabilities SBR", "Support Inventory SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR"], "Syeda Zainab Haider": ["Support Aveda", "Support Liabilities SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR"], "Tejas Thaker": ["Support Liabilities SBR"], "Bhavesh Rohera": ["Support Aveda", "Support Liabilities SBR", "Support Inventory SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR"], "Anirudh Mukherjee": ["Support Aveda", "Support Inventory SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR", "Support Liabilities SBR"], "Jai Katare": ["Support Aveda", "Support Liabilities SBR", "Support Inventory SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR"], "Arjun Bhatia": ["Fitness", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR", "Support Liabilities SBR"], "Raza Razvi": ["Support Aveda", "Fitness", "Support Payment SBR", "Support Inventory SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR"], "Kumar Amiya": ["Support Aveda", "Fitness", "Support Payment SBR", "Support Inventory SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR"], "Soumyajyoti Das": ["Support Aveda", "Support Payroll SBR", "Support Payment SBR", "Support Inventory SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR", "Support ePrescription SBR"], "PGC Vikram": ["Support Aveda", "Support Payment SBR", "Support Inventory SBR", "Support Liabilities SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR", "Support Admin SBR"], "Sai Kiran": ["Support Payroll SBR", "Support Payment SBR", "Support ePrescription SBR"], "Mithinti Durga Sai Rohan": ["Support Payroll SBR", "Support Payment SBR", "Support Liabilities SBR", "MyZen Tips SBR"], "Pooja Goud": ["Support Aveda", "Support Payment SBR", "Support Inventory SBR", "Support Liabilities SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR"], "Bhavana Mudunuri": ["Support Payment SBR", "Support Inventory SBR", "Support Liabilities SBR", "Support Marketing SBR", "Support Online & Apps SBR", "Support FrontDesk SBR"], "Anshul Srivastava": ["Fitness", "Support Payment SBR", "Support Digital Forms SBR", "MyZen Tips SBR"], "Sankalp Padhi": ["Support Payment SBR", "Support Liabilities SBR", "MyZen Tips SBR"], "Chakraborty Ayush Aseem": ["Fitness", "Support Hyper Connect SBR", "Support Payment SBR", "Support Liabilities SBR", "MyZen Tips SBR"], "Rahul Singh": ["Support Payroll SBR", "Support Payment SBR", "Support Liabilities SBR"], "Ayush Das": ["Fitness", "Support Payment SBR", "Support Liabilities SBR", "Support Marketing SBR", "Support Digital Forms SBR", "MyZen Tips SBR"], "Satvik": ["Support Hyper Connect SBR", "Support Liabilities SBR", "Support Payment SBR"], "Sachin": ["Support Payment SBR", "Support Payroll SBR", "Support Hyper Connect SBR", "Support Liabilities SBR", "Support Digital Forms SBR", "Support ePrescription SBR", "MyZen Tips SBR"], "Nithin Anil Kumar": ["Support Marketing SBR", "Support Hyper Connect SBR", "Support Liabilities SBR", "Support Digital Forms SBR", "Support ePrescription SBR"], "Sangeeth Mohan": ["Support Hyper Connect SBR"], "Rahul Sharma": ["Support Hyper Connect SBR"], "Karan Singh": ["Support Hyper Connect SBR"]
+        };
+
+        const DEFAULT_CALL_ELIGIBLE = new Set(["Vasista Gaggaiah Vemuri", "Sreevani Dasari", "Syeda Zainab Haider", "Bhavesh Rohera", "Anirudh Mukherjee", "Jai Katare", "Arjun Bhatia", "Raza Razvi", "Kumar Amiya", "Soumyajyoti Das", "PGC Vikram", "Sai Kiran", "Mithinti Durga Sai Rohan", "Pooja Goud", "Bhavana Mudunuri", "Anshul Srivastava", "Sankalp Padhi", "Chakraborty Ayush Aseem", "Rahul Singh", "Ayush Das", "Satvik"]);
+        const DEFAULT_TRIAGE_ELIGIBLE = new Set(["Vasista Gaggaiah Vemuri", "Arjun Bhatia", "Raza Razvi", "Kumar Amiya", "Soumyajyoti Das", "PGC Vikram", "Sai Kiran", "Mithinti Durga Sai Rohan", "Pooja Goud", "Bhavana Mudunuri", "Anshul Srivastava", "Sankalp Padhi", "Chakraborty Ayush Aseem", "Rahul Singh", "Ayush Das", "Satvik"]);
+        const DEFAULT_ALWAYS_TRIAGE = new Set(["Arjun Bhatia", "Raza Razvi", "Kumar Amiya", "Vasista Gaggaiah Vemuri"]);
+
+        const INITIAL_AGENTS = INITIAL_AGENTS_DATA.map((name, index) => ({
+            id: `agent-${index + 1}`,
+            name,
+            role: AGENT_ROLES[name] || 'L1',
+            weekOffs: [],
+            isCallEligible: DEFAULT_CALL_ELIGIBLE.has(name),
+            isTriageEligible: DEFAULT_TRIAGE_ELIGIBLE.has(name),
+            sbrBins: AGENT_SBR_MAP[name] || [],
+            alwaysTriage: DEFAULT_ALWAYS_TRIAGE.has(name),
+        }));
+        
+        const INITIAL_CONFIG = {
+            sbrBins: [...new Set(Object.values(AGENT_SBR_MAP).flat())].sort(),
+            timeSlots: {
+                calls: ["12-1 AM", "1-2 AM", "2-3 AM", "3-4 AM", "4-5 AM", "5-6:15 AM"],
+                triage: ["1-2 AM", "2-3 AM", "3-4 AM", "4-5 AM", "5-6:15 AM"]
+            },
+            callRequirements: {
+                weekday: { "12-1 AM": 4, "1-2 AM": 4, "2-3 AM": 4, "3-4 AM": 3, "4-5 AM": 2, "5-6:15 AM": 2 },
+                weekend: { "12-1 AM": 2, "1-2 AM": 2, "2-3 AM": 2, "3-4 AM": 2, "4-5 AM": 2, "5-6:15 AM": 2 }
+            }
+        };
+
+        // --- Screenshot Helper ---
+        const handleScreenshot = async (elementRef, targetName, setNotification) => {
+            if (!elementRef.current) {
+                setNotification({ show: true, message: 'Element to capture not found.', type: 'error' });
+                return;
+            }
+            if (typeof html2canvas === 'undefined') {
+                setNotification({ show: true, message: 'Screenshot library is still loading. Please wait a moment and try again.', type: 'error' });
+                return;
+            }
+
+            try {
+                setNotification({ show: true, message: `Capturing ${targetName}...`, type: 'info' });
+                const canvas = await html2canvas(elementRef.current, {
+                    useCORS: true,
+                    scale: 2, 
+                    backgroundColor: '#ffffff'
+                });
+                
+                const dataUrl = canvas.toDataURL('image/png');
+                const newWindow = window.open();
+                if (newWindow) {
+                    newWindow.document.write(`<!DOCTYPE html><title>Copy Image</title><body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background-color:#f0f2f5;"><img src="${dataUrl}" alt="Screenshot of ${targetName}" style="max-width:100%; max-height:100vh; object-fit:contain;"></body>`);
+                    setNotification({ show: true, message: 'Image opened in a new tab for copying.', type: 'success' });
+                } else {
+                    setNotification({ show: true, message: 'Please allow pop-ups for this site to open the screenshot.', type: 'error' });
+                }
+
+            } catch (error) {
+                console.error('html2canvas error:', error);
+                setNotification({ show: true, message: 'An error occurred while taking the screenshot.', type: 'error' });
+            }
+        };
+
+
+        // --- Main App Component ---
+        function App() {
+            const [agents, setAgents] = React.useState(INITIAL_AGENTS);
+            const [appConfig, setAppConfig] = React.useState(INITIAL_CONFIG);
+            
+            // In-memory storage for daily data, keyed by date string
+            const [schedules, setSchedules] = React.useState({});
+            const [triageStates, setTriageStates] = React.useState({});
+
+            const [activeTab, setActiveTab] = React.useState('dashboard');
+            const [isLoading, setIsLoading] = React.useState(false);
+            const [showAgentModal, setShowAgentModal] = React.useState(false);
+            const [editingAgent, setEditingAgent] = React.useState(null);
+            const [notification, setNotification] = React.useState({ show: false, message: '', type: 'success' });
+            const [selectedDate, setSelectedDate] = React.useState(new Date());
+            const [isSwapMode, setIsSwapMode] = React.useState(false);
+            const [firstSwapSlot, setFirstSwapSlot] = React.useState(null);
+            const [showRequirementsModal, setShowRequirementsModal] = React.useState(false);
+            const [showSettingsModal, setShowSettingsModal] = React.useState(false);
+            const [showCoverageWarningModal, setShowCoverageWarningModal] = React.useState(false);
+            const [coverageGaps, setCoverageGaps] = React.useState([]);
+            const [tempScheduleData, setTempScheduleData] = React.useState(null);
+            const [dailyRoles, setDailyRoles] = React.useState({});
+            const [agentToDelete, setAgentToDelete] = React.useState(null);
+            const [dailyStatus, setDailyStatus] = React.useState({});
+            
+            // --- Computed State for the selected date ---
+            const yyyy = selectedDate.getFullYear();
+            const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(selectedDate.getDate()).padStart(2, '0');
+            const selectedDateString = `${yyyy}-${mm}-${dd}`;
+            
+            const schedule = schedules[selectedDateString] || null;
+            const triageState = triageStates[selectedDateString] || null;
+            const selectedDayName = DAYS_OF_WEEK[selectedDate.getDay()];
+            
+            React.useEffect(() => {
+                const newDailyStatus = {};
+                agents.forEach(agent => {
+                    newDailyStatus[agent.id] = agent.weekOffs.includes(selectedDayName) ? 'Week Off' : 'Present';
+                });
+                setDailyStatus(newDailyStatus);
+            }, [agents, selectedDayName]);
+
+            React.useEffect(() => {
+                const newDailyRoles = {};
+                const currentSchedule = schedules[selectedDateString];
+                if (currentSchedule && currentSchedule.dailyRoles) {
+                    agents.forEach(agent => {
+                        newDailyRoles[agent.id] = currentSchedule.dailyRoles[agent.id] || agent.role;
+                    });
+                } else {
+                    agents.forEach(agent => {
+                        newDailyRoles[agent.id] = agent.role;
+                    });
+                }
+                setDailyRoles(newDailyRoles);
+            }, [agents, schedules, selectedDateString]);
+
+            React.useEffect(() => {
+                if (notification.show) {
+                    const timer = setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 5000);
+                    return () => clearTimeout(timer);
+                }
+            }, [notification]);
+
+            // ... (rest of the logic remains mostly the same, but state updates are local)
+             const handleOpenRequirementsModal = () => {
+                if (!appConfig) {
+                    setNotification({ show: true, message: 'Configuration is still loading. Please wait.', type: 'error' });
+                    return;
+                }
+                setShowRequirementsModal(true);
+            };
+
+            const handleGenerateSchedule = (callRequirements) => {
+                setShowRequirementsModal(false);
+                setIsLoading(true);
+
+                const agentsForDay = agents.map(agent => ({
+                    ...agent,
+                    role: dailyRoles[agent.id] || agent.role,
+                }));
+
+                let presentAgents = agentsForDay.filter(agent => dailyStatus[agent.id] === 'Present');
+                
+                for (let i = presentAgents.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [presentAgents[i], presentAgents[j]] = [presentAgents[j], presentAgents[i]];
+                }
+
+                const allSbrBins = appConfig.sbrBins;
+                const triageHours = appConfig.timeSlots.triage;
+                const callHours = appConfig.timeSlots.calls;
+                const allTimeSlots = [...new Set([...callHours, ...triageHours])].sort();
+
+                const agentCallCounts = presentAgents.reduce((acc, agent) => ({ ...acc, [agent.id]: 0 }), {});
+                const agentTriageAssignments = {};
+                const callSlots = callHours.reduce((acc, slot) => ({ ...acc, [slot]: [] }), {});
+                const triageSlots = triageHours.reduce((acc, slot) => ({ ...acc, [slot]: 'UNASSIGNED' }), {});
+
+                const presentAlwaysTriageAgents = presentAgents.filter(a => a.alwaysTriage && a.isTriageEligible);
+                const availableTriageSlotsList = triageHours.filter(slot => triageSlots[slot] === 'UNASSIGNED');
+
+                for (const agent of presentAlwaysTriageAgents) {
+                    if (agentTriageAssignments[agent.id]) continue;
+                    if (availableTriageSlotsList.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * availableTriageSlotsList.length);
+                        const assignedSlot = availableTriageSlotsList.splice(randomIndex, 1)[0];
+                        triageSlots[assignedSlot] = agent.name;
+                        agentTriageAssignments[agent.id] = assignedSlot;
+                    }
+                }
+                
+                const l1l2AgentsNeedingCall = presentAgents.filter(agent => (agent.role === 'L1' || agent.role === 'L2') && agent.isCallEligible && agentCallCounts[agent.id] === 0);
+
+                for (const agent of l1l2AgentsNeedingCall) {
+                    let bestSlot = null;
+                    let lowestImpact = Infinity;
+
+                    for (const slot of callHours) {
+                        if (callSlots[slot].length < (callRequirements[slot] || 0) && triageSlots[slot] !== agent.name && !callSlots[slot].includes(agent.name) && agentCallCounts[agent.id] < 2) {
+                            const busyInSlot = new Set(callSlots[slot]);
+                            if (triageSlots[slot] !== 'UNASSIGNED') busyInSlot.add(triageSlots[slot]);
+                            busyInSlot.add(agent.name);
+                            const freeAgentsInSlot = presentAgents.filter(p => !busyInSlot.has(p.name));
+                            let impactScore = 0;
+                            allSbrBins.forEach(sbr => {
+                                const coverageCount = freeAgentsInSlot.filter(p => p.sbrBins.includes(sbr)).length;
+                                if (coverageCount === 0) impactScore += 100;
+                                if (coverageCount === 1) impactScore += 10;
+                            });
+
+                            if (impactScore < lowestImpact) {
+                                lowestImpact = impactScore;
+                                bestSlot = slot;
+                            }
+                        }
+                    }
+
+                    if (bestSlot) {
+                        callSlots[bestSlot].push(agent.name);
+                        agentCallCounts[agent.id]++;
+                    }
+                }
+
+                for (const slot of allTimeSlots) {
+                    const neededCalls = (callRequirements[slot] || 0) - (callSlots[slot]?.length || 0);
+                    const neededTriage = triageHours.includes(slot) && triageSlots[slot] === 'UNASSIGNED' ? 1 : 0;
+                    const slotsToFillCount = neededCalls + neededTriage;
+
+                    for (let i = 0; i < slotsToFillCount; i++) {
+                        const isFillingTriage = triageHours.includes(slot) && triageSlots[slot] === 'UNASSIGNED';
+                        const busyAgentNamesInSlot = new Set([...(callSlots[slot] || []), triageSlots[slot]]);
+                        
+                        const candidates = presentAgents.filter(agent => {
+                            if (busyAgentNamesInSlot.has(agent.name)) return false;
+                            if (isFillingTriage) return agent.isTriageEligible && !agentTriageAssignments[agent.id];
+                            return agent.isCallEligible && agentCallCounts[agent.id] < 2;
+                        });
+
+                        if (candidates.length === 0) {
+                            if (!isFillingTriage && (callSlots[slot]?.length || 0) < (callRequirements[slot] || 0)) {
+                                callSlots[slot].push('UNASSIGNED');
+                            }
+                            continue;
+                        }
+                        
+                        const currentlyFreeAgents = presentAgents.filter(p => !busyAgentNamesInSlot.has(p.name));
+                        const scoredCandidates = candidates.map(candidate => {
+                            const otherFreeAgents = currentlyFreeAgents.filter(p => p.id !== candidate.id);
+                            const sbrsCoveredByOthers = new Set(otherFreeAgents.flatMap(p => p.sbrBins));
+                            const criticalityScore = (candidate.sbrBins || []).filter(sbr => !sbrsCoveredByOthers.has(sbr)).length;
+                            return { agent: candidate, criticalityScore };
+                        });
+
+                        const minScore = Math.min(...scoredCandidates.map(sc => sc.criticalityScore));
+                        const bestCandidates = scoredCandidates.filter(sc => sc.criticalityScore === minScore);
+                        const randomWinner = bestCandidates[Math.floor(Math.random() * bestCandidates.length)].agent;
+
+                        if (isFillingTriage) {
+                            triageSlots[slot] = randomWinner.name;
+                            agentTriageAssignments[randomWinner.id] = slot;
+                        } else {
+                            if(!callSlots[slot]) callSlots[slot] = [];
+                            callSlots[slot].push(randomWinner.name);
+                            agentCallCounts[randomWinner.id]++;
+                        }
+                    }
+                }
+                
+                const gaps = [];
+                for (const slot of allTimeSlots) {
+                    const busyAgentNames = new Set(callSlots[slot] || []);
+                    if (triageSlots[slot] && triageSlots[slot] !== 'UNASSIGNED') busyAgentNames.add(triageSlots[slot]);
+                    const freeAgents = presentAgents.filter(agent => !busyAgentNames.has(agent.name));
+                    allSbrBins.forEach(sbr => {
+                        if (!freeAgents.some(agent => agent.sbrBins.includes(sbr))) {
+                            gaps.push({ sbr, slot });
+                        }
+                    });
+                }
+                
+                const newSchedule = { date: selectedDateString, availability: agents.map(agent => ({ name: agent.name, role: dailyRoles[agent.id] || agent.role, status: dailyStatus[agent.id] })).sort((a,b) => a.name.localeCompare(b.name)), triageSlots, callSlots, dailyRoles, availabilitySheetData: null };
+                const newTriageState = { ticketCounts: {}, roundRobinIndex: appConfig.sbrBins.reduce((acc, bin) => ({ ...acc, [bin]: 0 }), {}), unavailableAssistants: {}, lastAssigned: {} };
+
+                if (gaps.length > 0) {
+                    setCoverageGaps(gaps);
+                    setTempScheduleData({ schedule: newSchedule, triageState: newTriageState });
+                    setShowCoverageWarningModal(true);
+                    setIsLoading(false);
+                    return;
+                }
+
+                setSchedules(s => ({...s, [selectedDateString]: newSchedule}));
+                setTriageStates(s => ({...s, [selectedDateString]: newTriageState}));
+                setNotification({ show: true, message: 'Optimized schedule generated successfully!', type: 'success' });
+                setIsLoading(false);
+            };
+
+            const handleProceedAnyway = () => {
+                if (!tempScheduleData) return;
+                setIsLoading(true);
+                setShowCoverageWarningModal(false);
+                const { schedule: scheduleToSave, triageState: triageStateToSave } = tempScheduleData;
+                setSchedules(s => ({...s, [selectedDateString]: scheduleToSave}));
+                setTriageStates(s => ({...s, [selectedDateString]: triageStateToSave}));
+                setNotification({ show: true, message: 'Schedule generated with coverage warnings.', type: 'success' });
+                setIsLoading(false);
+                setTempScheduleData(null);
+                setCoverageGaps([]);
+            };
+
+            const handleManualSlotUpdate = (slotType, slot, agentName, index = 0) => {
+                const newSchedule = JSON.parse(JSON.stringify(schedule));
+                if (slotType === 'calls') {
+                    newSchedule.callSlots[slot][index] = agentName;
+                } else {
+                    newSchedule.triageSlots[slot] = agentName;
+                }
+                setSchedules(s => ({...s, [selectedDateString]: newSchedule}));
+                setNotification({ show: true, message: 'Slot updated manually!', type: 'success' });
+            };
+
+            const handleSwapSlots = (slot1, slot2) => {
+                if (!schedule || slot1.type !== slot2.type) {
+                    setNotification({ show: true, message: 'Invalid swap. Slots must be of the same type (Call-for-Call or Triage-for-Triage).', type: 'error' });
+                    return;
+                }
+                const newSchedule = JSON.parse(JSON.stringify(schedule));
+                if (slot1.type === 'triage') {
+                    newSchedule.triageSlots[slot1.slot] = slot2.agent;
+                    newSchedule.triageSlots[slot2.slot] = slot1.agent;
+                } else if (slot1.type === 'calls') {
+                    newSchedule.callSlots[slot1.slot][slot1.index] = slot2.agent;
+                    newSchedule.callSlots[slot2.slot][slot2.index] = slot1.agent;
+                }
+                setSchedules(s => ({...s, [selectedDateString]: newSchedule}));
+                setNotification({ show: true, message: 'Slots swapped successfully!', type: 'success' });
+                setFirstSwapSlot(null);
+                setIsSwapMode(false);
+            };
+            
+            const handleSaveAgent = (agentData) => {
+                const newAgents = [...agents];
+                if (agentData.id) {
+                    const index = newAgents.findIndex(a => a.id === agentData.id);
+                    if(index > -1) newAgents[index] = agentData;
+                } else {
+                    agentData.id = `agent-${Date.now()}`;
+                    newAgents.push(agentData);
+                }
+                setAgents(newAgents.sort((a, b) => a.name.localeCompare(b.name)));
+                setNotification({ show: true, message: `Agent ${agentData.id ? 'updated' : 'added'} successfully.`, type: 'success' });
+                setShowAgentModal(false);
+                setEditingAgent(null);
+            };
+
+            const handleDeleteAgent = (agent) => setAgentToDelete(agent);
+
+            const confirmDeleteAgent = () => {
+                if (!agentToDelete) return;
+                setAgents(agents.filter(a => a.id !== agentToDelete.id));
+                setNotification({ show: true, message: `${agentToDelete.name} has been deleted.`, type: 'success' });
+                setAgentToDelete(null);
+            };
+            
+             const handleUpdateManualTriage = (newState) => {
+                setTriageStates(s => ({...s, [selectedDateString]: newState}));
+            };
+            
+            const handleUpdateAvailabilitySheet = (newSheetData) => {
+                const newSchedule = { ...schedule, availabilitySheetData: newSheetData };
+                setSchedules(s => ({...s, [selectedDateString]: newSchedule}));
+                setNotification({show: true, message: 'Availability sheet saved.', type: 'success'});
+            }
+            
+            const renderContent = () => {
+                if (isLoading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div></div>;
+                switch (activeTab) {
+                    case 'dashboard': return <Dashboard schedule={schedule} agents={agents} dailyStatus={dailyStatus} onGenerateClick={handleOpenRequirementsModal} onManualUpdate={handleManualSlotUpdate} isSwapMode={isSwapMode} setIsSwapMode={setIsSwapMode} firstSwapSlot={firstSwapSlot} setFirstSwapSlot={setFirstSwapSlot} onSwap={handleSwapSlots} selectedDate={selectedDate} setNotification={setNotification} appConfig={appConfig} onUpdateSheet={handleUpdateAvailabilitySheet} />;
+                    case 'planner': return <DailyPlanner agents={agents} dailyStatus={dailyStatus} setDailyStatus={setDailyStatus} onGenerateClick={handleOpenRequirementsModal} dayName={selectedDayName} dailyRoles={dailyRoles} setDailyRoles={setDailyRoles} />;
+                    case 'triaging': return <ManualTriagingAssistant agents={agents} schedule={schedule} triageState={triageState} dateString={selectedDateString} setNotification={setNotification} appConfig={appConfig} onUpdateTriageState={handleUpdateManualTriage} />;
+                    case 'sbrCoverage': return <SbrCoverageManager agents={agents} appConfig={appConfig} dailyStatus={dailyStatus} setNotification={setNotification} onUpdateAgentSBRs={(agentId, newSbrs) => setAgents(prev => prev.map(a => a.id === agentId ? {...a, sbrBins: newSbrs} : a))} />;
+                    default: return <Dashboard schedule={schedule} agents={agents} dailyStatus={dailyStatus} onGenerateClick={handleOpenRequirementsModal} onManualUpdate={handleManualSlotUpdate} selectedDate={selectedDate} setNotification={setNotification} appConfig={appConfig} onUpdateSheet={handleUpdateAvailabilitySheet} />;
+                }
+            };
+            
+            return (
+                <div className="bg-slate-100 min-h-screen font-sans text-slate-800">
+                    <div className="container mx-auto p-4 md:p-6">
+                        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                            <div>
+                                <h1 className="text-3xl font-bold text-slate-900">Support Shift Scheduler</h1>
+                                <p className="text-slate-500 mt-1">Manage daily tasks, calls, and agent availability.</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <DateNavigator selectedDate={selectedDate} onDateChange={setSelectedDate} />
+                                <button onClick={() => setShowSettingsModal(true)} className="p-2 rounded-full hover:bg-slate-200 transition-colors">
+                                    <SettingsIcon />
+                                </button>
+                            </div>
+                        </header>
+
+                        {notification.show && <div className={`fixed top-5 right-5 p-4 rounded-lg shadow-xl text-white ${notification.type === 'success' ? 'bg-green-500' : notification.type === 'info' ? 'bg-blue-500' : 'bg-red-500'} z-50`}>{notification.message}</div>}
+                        
+                        {showAgentModal && <AgentModal agent={editingAgent} onSave={handleSaveAgent} onClose={() => setShowAgentModal(false)} appConfig={appConfig}/>}
+                        
+                        {showRequirementsModal && <CallRequirementsModal 
+                            onClose={() => setShowRequirementsModal(false)}
+                            onGenerate={handleGenerateSchedule}
+                            dayName={selectedDayName}
+                            appConfig={appConfig}
+                        />}
+                        
+                        {showCoverageWarningModal && <CoverageWarningModal
+                            gaps={coverageGaps}
+                            onProceed={handleProceedAnyway}
+                            onCancel={() => {
+                                setShowCoverageWarningModal(false);
+                                setTempScheduleData(null);
+                                setCoverageGaps([]);
+                            }}
+                        />}
+
+                        {agentToDelete && <DeleteConfirmationModal 
+                            agent={agentToDelete}
+                            onConfirm={confirmDeleteAgent}
+                            onCancel={() => setAgentToDelete(null)}
+                        />}
+
+                        {showSettingsModal && <SettingsModal 
+                            onClose={() => setShowSettingsModal(false)}
+                            agents={agents}
+                            appConfig={appConfig}
+                            setNotification={setNotification}
+                            onEditAgent={(agent) => { setEditingAgent(agent); setShowAgentModal(true); }}
+                            onAddAgent={() => { setEditingAgent(null); setShowAgentModal(true); }}
+                            onDeleteAgent={handleDeleteAgent}
+                            onAppConfigUpdate={setAppConfig}
+                            onAgentsUpdate={setAgents}
+                        />}
+
+                        <div className="mb-6 border-b border-slate-200">
+                            <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                                <button onClick={() => setActiveTab('dashboard')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'dashboard' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>Today's Schedule</button>
+                                <button onClick={() => setActiveTab('planner')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'planner' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>Daily Planner</button>
+                                <button onClick={() => setActiveTab('triaging')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'triaging' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>Manual Triaging Assistant</button>
+                                <button onClick={() => setActiveTab('sbrCoverage')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'sbrCoverage' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>SBR Bin Coverage & Skills</button>
+                            </nav>
+                        </div>
+                        <main>{renderContent()}</main>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Sub-Components (Modified for Local State) ---
+        function SbrBinCard({ sbrBin, allAgents, dailyStatus, setNotification, onUpdateAgentSBRs }) {
+            const [isAddingAgent, setIsAddingAgent] = React.useState(false);
+            const [selectedAgentId, setSelectedAgentId] = React.useState('');
+
+            const skilledAgents = React.useMemo(() => allAgents.filter(agent => agent.sbrBins?.includes(sbrBin)).sort((a,b) => a.name.localeCompare(b.name)), [allAgents, sbrBin]);
+            const unskilledAgents = React.useMemo(() => allAgents.filter(agent => !agent.sbrBins?.includes(sbrBin)).sort((a,b) => a.name.localeCompare(b.name)), [allAgents, sbrBin]);
+
+            const handleAddAgent = () => {
+                if (!selectedAgentId) return;
+                const agentToUpdate = allAgents.find(a => a.id === selectedAgentId);
+                if (!agentToUpdate) return;
+                const updatedSbrBins = [...(agentToUpdate.sbrBins || []), sbrBin];
+                onUpdateAgentSBRs(selectedAgentId, updatedSbrBins);
+                setNotification({ show: true, message: `${agentToUpdate.name} now skilled in ${sbrBin}.`, type: 'success' });
+                setIsAddingAgent(false);
+                setSelectedAgentId('');
+            };
+            
+            return (
+                <Card title={sbrBin} icon={<ListIcon/>}>
+                    <div className="space-y-2 mb-4">
+                        {skilledAgents.map(agent => {
+                            const isPresent = dailyStatus[agent.id] === 'Present';
+                            return (
+                                <div key={agent.id} className={`flex items-center justify-between p-2 rounded-md text-sm ${isPresent ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-500'}`}>
+                                    <span className="font-medium">{agent.name}</span>
+                                    {isPresent && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-200">Present</span>}
+                                </div>
+                            );
+                        })}
+                        {skilledAgents.length === 0 && <p className="text-sm text-slate-400 text-center py-2">No agents skilled in this bin.</p>}
+                    </div>
+                    {isAddingAgent ? (
+                        <div className="space-y-2 pt-4 border-t border-slate-200">
+                            <select value={selectedAgentId} onChange={e => setSelectedAgentId(e.target.value)} className="w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="" disabled>Select an agent to add...</option>
+                                {unskilledAgents.map(agent => (<option key={agent.id} value={agent.id}>{agent.name}</option>))}
+                            </select>
+                            <div className="flex gap-2">
+                                <button onClick={handleAddAgent} disabled={!selectedAgentId} className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white font-semibold py-2 px-3 rounded-lg shadow-md hover:bg-indigo-700 transition-colors text-sm disabled:bg-indigo-400">
+                                <CheckCircleIcon/> Add
+                                </button>
+                                <button onClick={() => setIsAddingAgent(false)} className="flex-1 bg-slate-200 text-slate-800 font-semibold py-2 px-3 rounded-lg hover:bg-slate-300 transition-colors text-sm">Cancel</button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="pt-4 border-t border-slate-200">
+                            <button onClick={() => setIsAddingAgent(true)} className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-600 font-semibold py-2 px-3 rounded-lg hover:bg-slate-200 transition-colors text-sm">
+                                <UserPlusIcon className="h-4 w-4"/> Add Agent
+                            </button>
+                        </div>
+                    )}
+                </Card>
+            );
+        }
+
+        function SbrCoverageManager({ agents, appConfig, dailyStatus, setNotification, onUpdateAgentSBRs }) {
+            const presentAgents = React.useMemo(() => agents.filter(agent => dailyStatus[agent.id] === 'Present'), [agents, dailyStatus]);
+            const uncoveredBins = React.useMemo(() => appConfig.sbrBins.filter(bin => !presentAgents.some(agent => agent.sbrBins?.includes(bin))), [appConfig, presentAgents]);
+
+            if (!appConfig) return <div className="text-center py-16 px-6 bg-white rounded-lg shadow-md">Loading configuration...</div>;
+
+            return (
+                <div className="space-y-6">
+                    {uncoveredBins.length > 0 && (
+                        <div className="p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-r-lg shadow">
+                            <div className="flex items-center">
+                                <AlertTriangleIcon className="h-6 w-6 mr-3"/>
+                                <div>
+                                    <p className="font-bold">Heads up! Coverage Gap Detected.</p>
+                                    <p className="text-sm">No agents are present today for: <span className="font-semibold">{uncoveredBins.join(', ')}</span>.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {appConfig.sbrBins.map(bin => (
+                            <SbrBinCard 
+                                key={bin} sbrBin={bin} allAgents={agents} dailyStatus={dailyStatus}
+                                setNotification={setNotification} onUpdateAgentSBRs={onUpdateAgentSBRs}
+                            />
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+        
+        function Dashboard({ schedule, agents, dailyStatus, onGenerateClick, onManualUpdate, isSwapMode, setIsSwapMode, firstSwapSlot, setFirstSwapSlot, onSwap, selectedDate, setNotification, appConfig, onUpdateSheet }) {
+            const presentAgents = React.useMemo(() => agents.filter(a => dailyStatus[a.id] === 'Present').map(a => a.name), [agents, dailyStatus]);
+            const ctSlotsTableRef = React.useRef(null);
+            const ctSlotsTableActions = <button onClick={() => handleScreenshot(ctSlotsTableRef, 'CT Slots Table', setNotification)} className="p-1 rounded-full text-slate-500 hover:bg-slate-200 transition-colors" title="Screenshot Table"><CameraIcon /></button>;
+
+            const handleSlotClick = (type, slot, agent, index = null) => {
+                if (!isSwapMode || agent === 'UNASSIGNED') return;
+                const clickedSlot = { type, slot, agent, index };
+                if (!firstSwapSlot) setFirstSwapSlot(clickedSlot);
+                else onSwap(firstSwapSlot, clickedSlot);
+            };
+
+            const toggleSwapMode = () => {
+                setIsSwapMode(!isSwapMode);
+                setFirstSwapSlot(null);
+            };
+            
+            if (!schedule) {
+                return (
+                    <div className="text-center py-16 px-6 bg-white rounded-lg shadow-md">
+                        <CalendarIcon className="mx-auto h-12 w-12 text-slate-400" />
+                        <h3 className="mt-2 text-lg font-medium text-slate-900">No Schedule Generated</h3>
+                        <p className="mt-1 text-sm text-slate-500">Go to the 'Daily Planner' tab to set agent availability and generate a schedule for the selected date.</p>
+                        <div className="mt-6">
+                            <button onClick={onGenerateClick} className="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-green-700 transition-colors">Generate Schedule</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const presentAvailability = schedule.availability.filter(a => a.status === 'Present');
+
+            return (
+                <div className="space-y-8">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <h2 className="text-2xl font-semibold text-slate-800">Dashboard for {new Date(schedule.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
+                        <div className="flex gap-2">
+                            <button onClick={toggleSwapMode} className={`flex items-center gap-2 font-semibold py-2 px-4 rounded-lg shadow-md transition-colors ${isSwapMode ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}><RepeatIcon className="h-5 w-5"/> {isSwapMode ? 'Cancel Swap' : 'Swap Slots'}</button>
+                            <button onClick={onGenerateClick} className="flex items-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition-colors"><RefreshCwIcon className="h-5 w-5"/>Regenerate</button>
+                        </div>
+                    </div>
+                    <Card title="Present Agents" icon={<UsersIcon />}><div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-200"><thead className="bg-slate-50"><tr><th className="px-6 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Agent</th><th className="px-6 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th></tr></thead><tbody className="bg-white divide-y divide-slate-200">{presentAvailability.map((agent, idx) => (<tr key={idx} className="hover:bg-slate-50"><td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-slate-900">{agent.name}</td><td className="px-6 py-2 whitespace-nowrap text-sm text-slate-600">{agent.role}</td></tr>))}</tbody></table></div></Card>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <Card title={`Call Slots (${appConfig.timeSlots.calls[0]} - ${appConfig.timeSlots.calls[appConfig.timeSlots.calls.length - 1]})`} icon={<ListIcon />}><div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-200"><thead className="bg-slate-50"><tr><th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Time Slot</th><th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Assigned Agents</th></tr></thead><tbody className="bg-white divide-y divide-slate-200">{Object.entries(schedule.callSlots).map(([slot, assignedAgents]) => (<tr key={slot} className="hover:bg-slate-50"><td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{slot}</td><td className="px-4 py-4 text-sm text-slate-600">{assignedAgents.map((agent, i) => { const isSelected = firstSwapSlot?.type === 'calls' && firstSwapSlot.slot === slot && firstSwapSlot.index === i; return (<div key={i} className={`p-1 rounded-md ${isSelected ? 'bg-blue-200' : ''}`}>{isSwapMode ? (<button onClick={() => handleSlotClick('calls', slot, agent, i)} disabled={agent === 'UNASSIGNED'} className={`w-full text-left ${agent === 'UNASSIGNED' ? 'text-red-500 font-semibold cursor-not-allowed' : 'hover:bg-slate-100'}`}>{agent}</button>) : (<ManualSlotEditor value={agent} options={presentAgents.filter(p => p !== schedule.triageSlots[slot])} onChange={(newName) => onManualUpdate('calls', slot, newName, i)} />)}</div>)})}</td></tr>))}</tbody></table></div></Card>
+                        <Card title={`Ticket Triaging Slots (${appConfig.timeSlots.triage[0]} - ${appConfig.timeSlots.triage[appConfig.timeSlots.triage.length - 1]})`} icon={<ListIcon />}><div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-200"><thead className="bg-slate-50"><tr><th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Time Slot</th><th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Assigned Agent</th></tr></thead><tbody className="bg-white divide-y divide-slate-200">{Object.entries(schedule.triageSlots).map(([slot, agent]) => { const isSelected = firstSwapSlot?.type === 'triage' && firstSwapSlot.slot === slot; return (<tr key={slot} className="hover:bg-slate-50"><td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{slot}</td><td className={`px-4 py-4 whitespace-nowrap text-sm ${agent === 'UNASSIGNED' ? 'text-red-500 font-semibold' : 'text-slate-600'}`}><div className={`p-1 rounded-md ${isSelected ? 'bg-blue-200' : ''}`}>{isSwapMode ? (<button onClick={() => handleSlotClick('triage', slot, agent)} disabled={agent === 'UNASSIGNED'} className={`w-full text-left ${agent === 'UNASSIGNED' ? 'cursor-not-allowed' : 'hover:bg-slate-100'}`}>{agent}</button>) : (<ManualSlotEditor value={agent} options={presentAgents.filter(p => !schedule.callSlots[slot]?.includes(p))} onChange={(newName) => onManualUpdate('triage', slot, newName)} />)}</div></td></tr>)})}</tbody></table></div></Card>
+                    </div>
+                    <AvailabilitySheet schedule={schedule} setNotification={setNotification} appConfig={appConfig} onSave={onUpdateSheet} />
+                    <Card title="CT Slots" icon={<TableIcon />} headerActions={ctSlotsTableActions}><div ref={ctSlotsTableRef}><CTSlotsTable schedule={schedule} selectedDate={selectedDate} appConfig={appConfig} /></div></Card>
+                </div>
+            );
+        }
+        
+        function AvailabilitySheet({ schedule, setNotification, appConfig, onSave }) {
+            const [sheetData, setSheetData] = React.useState(null);
+            const [isSaving, setIsSaving] = React.useState(false);
+            const tableContainerRef = React.useRef(null);
+            const screenshotButton = <button onClick={() => handleScreenshot(tableContainerRef, 'Availability Sheet', setNotification)} className="p-1 rounded-full text-slate-500 hover:bg-slate-200 transition-colors" title="Screenshot Sheet"><CameraIcon /></button>;
+
+            React.useEffect(() => {
+                if (schedule.availabilitySheetData) {
+                    setSheetData(schedule.availabilitySheetData);
+                    return;
+                }
+                const presentAgents = schedule.availability.filter(a => a.status === 'Present');
+                const presentAgentNames = new Set(presentAgents.map(a => a.name));
+                const dayOfWeek = new Date(schedule.date + 'T00:00:00').getDay();
+                const isWeekday = dayOfWeek > 0 && dayOfWeek < 6;
+                const l3AgentNames = ['Sangeeth Mohan', 'Karan Pratap Singh'];
+                const presentL3 = l3AgentNames.filter(name => presentAgentNames.has(name));
+                const presentL1 = presentAgents.filter(a => a.role === 'L1').map(a => a.name);
+                const presentL2 = presentAgents.filter(a => a.role === 'L2').map(a => a.name);
+                const triaging = Object.entries(schedule.triageSlots).map(([slot, agent]) => ({ slot, agent })).sort((a, b) => a.slot.localeCompare(b.slot));
+                let bottomSectionNames = [];
+                const bottomSectionTimes = {};
+                if (presentAgentNames.has('Sachin')) { bottomSectionNames.push('Sachin'); if (isWeekday) bottomSectionTimes['Sachin'] = '2:15 am - 3:15 am'; }
+                if (presentAgentNames.has('Nithin Anil Kumar')) { bottomSectionNames.push('Nithin Anil Kumar'); if (isWeekday) bottomSectionTimes['Nithin Anil Kumar'] = '4:15 am - 5:15 am'; }
+                if (presentAgentNames.has('Rahul Sharma')) { bottomSectionNames.push('Rahul Sharma'); if (isWeekday) bottomSectionTimes['Rahul Sharma'] = '5:15 am - 6:15 am'; }
+                if (isWeekday) { bottomSectionNames.push('Miriam'); bottomSectionTimes['Miriam'] = '1:15 am - 2:15 am'; bottomSectionNames.push('TAM'); bottomSectionTimes['TAM'] = '3:15 am - 4:15 am'; }
+                if (isWeekday) {
+                    bottomSectionNames.sort((a, b) => {
+                        const parse = t => { if (!t) return Infinity; const [s] = t.split(' - '); const [h,m] = s.split(' ')[0].split(':').map(Number); return (h === 12 ? 0 : h) * 60 + (m || 0);};
+                        return parse(bottomSectionTimes[a]) - parse(bottomSectionTimes[b]);
+                    });
+                }
+                const topSectionLength = Math.max(presentL3.length, presentL1.length, presentL2.length, triaging.length);
+                const gap = 2;
+                const bottomSectionLength = bottomSectionNames.length;
+                const weekendExtraRows = !isWeekday ? Math.max(0, 13 - (topSectionLength + gap + bottomSectionLength)) : 0;
+                const numRows = topSectionLength + gap + bottomSectionLength + weekendExtraRows;
+                const initialData = {l3: Array(numRows).fill(''), l1: Array(numRows).fill(''), l2: Array(numRows).fill(''), triageName: Array(numRows).fill(''), triageSlot: Array(numRows).fill(''), supportLogins: Array(numRows).fill(''), t3LeadsAlias: Array(numRows).fill('')};
+                presentL3.forEach((name, i) => initialData.l3[i] = name);
+                presentL1.forEach((name, i) => initialData.l1[i] = name);
+                presentL2.forEach((name, i) => initialData.l2[i] = name);
+                triaging.forEach((t, i) => { initialData.triageName[i] = t.agent; initialData.triageSlot[i] = t.slot; });
+                const bottomSectionStartIndex = topSectionLength + gap;
+                bottomSectionNames.forEach((name, i) => {
+                    const rowIndex = bottomSectionStartIndex + i;
+                    if (rowIndex < numRows) { initialData.triageName[rowIndex] = name; if (isWeekday) { initialData.t3LeadsAlias[rowIndex] = bottomSectionTimes[name] || ''; } }
+                });
+                if (!isWeekday) {
+                    const weekendTimes = ["1:15 am - 3:15am", "3:15 am - 4:15 am", "4:15 am - 6:15 am"];
+                    if (numRows >= 3) {
+                       initialData.t3LeadsAlias[numRows - 3] = weekendTimes[0];
+                       initialData.t3LeadsAlias[numRows - 2] = weekendTimes[1];
+                       initialData.t3LeadsAlias[numRows - 1] = weekendTimes[2];
+                    }
+                }
+                setSheetData(initialData);
+            }, [schedule, appConfig]);
+            
+            const handleCellChange = (colKey, rowIndex, value) => setSheetData(prev => ({ ...prev, [colKey]: prev[colKey].map((v, i) => i === rowIndex ? value : v) }));
+            
+            const handleSave = () => { onSave(sheetData); };
+
+            const getCellBackgroundColor = (key, value) => {
+                const hasData = value && String(value).trim() !== '';
+                switch (key) {
+                    case null: return '#45d65a'; case 'l3': return hasData ? '#fce4d6' : '#ffffff'; case 'l1': return '#caedfb'; case 'l2': return hasData ? '#c1f0c8' : '#45d65a'; case 'triageName': return '#c0e4f5'; case 'triageSlot': return '#c0e4f5'; case 'supportLogins': return hasData ? '#92d050' : '#f7c7ac'; case 't3LeadsAlias': return '#92d050'; default: return '#ffffff';
+                }
+            };
+
+            if (!sheetData) return <div className="flex justify-center items-center h-48"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div></div>;
+            const numRows = sheetData.l1.length;
+            const headers = ["Shift Timings", "L2.5s and L3+", "L1s", "L2s", "Name", "Triage (L1 & L2)", "Support Logins", "T3&Leads Alias"];
+            const columnKeys = [null, "l3", "l1", "l2", "triageName", "triageSlot", "supportLogins", "t3LeadsAlias"];
+
+            return (
+                <Card title="Availability Sheet" icon={<TableIcon />} headerActions={screenshotButton}>
+                    <div className="overflow-x-auto" ref={tableContainerRef}>
+                        <table className="min-w-full border-collapse border border-black">
+                            <thead><tr>{headers.map(h => <th key={h} className="border border-black p-1 text-black font-bold text-sm" style={{backgroundColor: '#00b0f0'}}>{h}</th>)}</tr></thead>
+                            <tbody>{Array.from({ length: numRows }).map((_, rIdx) => (<tr key={rIdx}>{columnKeys.map(key => (<td key={`${key}-${rIdx}`} className="border border-black" style={{ backgroundColor: getCellBackgroundColor(key, key ? sheetData[key][rIdx] : 'dummy') }}><div contentEditable suppressContentEditableWarning className="px-2 py-1 min-h-[28px] text-black focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-transparent" onBlur={e => key && handleCellChange(key, rIdx, e.currentTarget.textContent)}>{key ? sheetData[key][rIdx] : "10:00 pm-7 am"}</div></td>))}</tr>))}</tbody>
+                        </table>
+                    </div>
+                    <div className="mt-4 flex justify-end"><button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-200 disabled:bg-indigo-400 disabled:cursor-not-allowed"><SaveIcon /> {isSaving ? 'Saving...' : 'Save Sheet'}</button></div>
+                </Card>
+            );
+        }
+
+        const formatTimeLeft = (endTime) => {
+            const totalSeconds = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        };
+
+        function ManualTriagingAssistant({ agents, schedule, triageState: initialTriageState, dateString, setNotification, appConfig, onUpdateTriageState }) {
+            const [triageState, setTriageState] = React.useState(initialTriageState);
+            React.useEffect(() => { if(initialTriageState) setTriageState(initialTriageState) }, [initialTriageState, dateString]);
+
+            const updateTriageState = (updates) => {
+                const newState = { ...triageState, ...updates };
+                setTriageState(newState);
+                onUpdateTriageState(newState);
+            };
+
+            const [selectedHour, setSelectedHour] = React.useState('');
+            const [suggestedAgentId, setSuggestedAgentId] = React.useState(null);
+            const [selectedSbr, setSelectedSbr] = React.useState(null);
+            const [isSummaryVisible, setIsSummaryVisible] = React.useState(false);
+            const [unavailabilityInput, setUnavailabilityInput] = React.useState({ agentId: null, minutes: '15' });
+            const [currentTime, setCurrentTime] = React.useState(Date.now());
+            const [roleFilter, setRoleFilter] = React.useState('All');
+
+            const sbrCoverageData = React.useMemo(() => {
+                if (!selectedHour || !schedule || !agents || !appConfig) return { uncoveredBins: [], coverageDetails: {} };
+                const triagerName = schedule.triageSlots[selectedHour];
+                const agentsOnCall = new Set(schedule.callSlots[selectedHour] || []);
+                const presentAgents = agents.filter(a => schedule.availability.find(sa => sa.name === a.name)?.status === 'Present');
+                const coverageDetails = {};
+                const uncoveredBins = [];
+                for (const sbr of appConfig.sbrBins) {
+                    const skilledAgents = presentAgents.filter(a => a.sbrBins.includes(sbr));
+                    const available = [], onCall = [];
+                    let triaging = null;
+                    for (const agent of skilledAgents) {
+                        if (agent.name === triagerName) triaging = agent.name;
+                        else if (agentsOnCall.has(agent.name)) onCall.push(agent.name);
+                        else available.push(agent.name);
+                    }
+                    coverageDetails[sbr] = { available, onCall, triaging, availableCount: available.length };
+                    if (available.length === 0) uncoveredBins.push(sbr);
+                }
+                return { uncoveredBins, coverageDetails };
+            }, [selectedHour, schedule, agents, appConfig]);
+
+            const overallTriagedToday = React.useMemo(() => {
+                if (!triageState || !triageState.ticketCounts) return 0;
+                return Object.values(triageState.ticketCounts).reduce((total, slotCounts) => total + Object.values(slotCounts).reduce((slotTotal, count) => slotTotal + count, 0), 0);
+            }, [triageState]);
+
+             React.useEffect(() => {
+                const intervalId = setInterval(() => {
+                    if (!triageState || !selectedHour) { setCurrentTime(Date.now()); return; }
+                    const unavailableForHour = triageState.unavailableAssistants?.[selectedHour];
+                    if (!unavailableForHour) { setCurrentTime(Date.now()); return; }
+                    
+                    const now = Date.now();
+                    const newUnavailable = {...unavailableForHour};
+                    let needsUpdate = false;
+                    Object.keys(newUnavailable).forEach(agentId => {
+                        if (newUnavailable[agentId] < now) {
+                            delete newUnavailable[agentId];
+                            needsUpdate = true;
+                        }
+                    });
+
+                    if (needsUpdate) {
+                        const newUnavailableAssistants = {...triageState.unavailableAssistants, [selectedHour]: newUnavailable};
+                        updateTriageState({ unavailableAssistants: newUnavailableAssistants });
+                    }
+                    setCurrentTime(now);
+                }, 5000);
+                return () => clearInterval(intervalId);
+            }, [selectedHour, triageState]);
+
+            const parseTimeForSort = (timeStr) => { if (!timeStr) return 99; const [hours] = timeStr.split('-')[0].trim().split(':').map(Number); return hours === 12 ? 0 : hours; };
+            const sortedTriageSlots = React.useMemo(() => schedule?.triageSlots ? Object.keys(schedule.triageSlots).sort(parseTimeForSort) : [], [schedule]);
+            const agentsForSelectedHour = React.useMemo(() => {
+                if (!selectedHour || !schedule) return [];
+                const availableForAssist = agents.filter(a => schedule.availability.find(sa => sa.name === a.name)?.status === 'Present');
+                return availableForAssist.filter(agent => agent.name !== schedule.triageSlots[selectedHour] && !(schedule.callSlots[selectedHour] || []).includes(agent.name));
+            }, [selectedHour, schedule, agents]);
+            
+            const filteredAgents = React.useMemo(() => {
+                if (roleFilter === 'All' || !schedule) return agentsForSelectedHour;
+                return agentsForSelectedHour.filter(agent => {
+                    const dailyRole = schedule.availability.find(a => a.name === agent.name)?.role;
+                    if (roleFilter === 'L1') return dailyRole === 'L1';
+                    if (roleFilter === 'L2') return dailyRole === 'L2';
+                    if (roleFilter === 'L2.5 & L3') return dailyRole === 'L2.5' || dailyRole === 'L3';
+                    return true;
+                });
+            }, [agentsForSelectedHour, roleFilter, schedule]);
+
+            if (!schedule || !triageState) return <div className="text-center py-16 px-6 bg-white rounded-lg shadow-md"><CalendarIcon className="mx-auto h-12 w-12 text-slate-400" /><h3 className="mt-2 text-lg font-medium text-slate-900">Generate a Schedule First</h3><p className="mt-1 text-sm text-slate-500">The triaging assistant requires a daily schedule to function. Please go to the Daily Planner.</p></div>;
+            
+            const { callSlots, triageSlots } = schedule;
+            const { ticketCounts = {}, roundRobinIndex = {}, unavailableAssistants = {} } = triageState;
+            const availableForAssist = agents.filter(a => schedule.availability.find(sa => sa.name === a.name)?.status === 'Present');
+
+            const handleManualTicketCountChange = (agentId, change) => {
+                if (!selectedHour) return;
+                const currentCounts = ticketCounts?.[selectedHour] || {};
+                const newCount = Math.max(0, (currentCounts[agentId] || 0) + change);
+                updateTriageState({ ticketCounts: { ...ticketCounts, [selectedHour]: { ...currentCounts, [agentId]: newCount } } });
+            };
+
+            const handleSbrClick = (sbr) => {
+                if (!selectedHour) { setNotification({ show: true, message: 'Please select a triaging hour first.', type: 'error' }); return; }
+                setSelectedSbr(sbr);
+                const unavailableNow = unavailableAssistants?.[selectedHour] || {};
+                const potentialAgents = availableForAssist.filter(agent => agent.sbrBins.includes(sbr) && agent.name !== triageSlots[selectedHour] && !callSlots[selectedHour]?.includes(agent.name) && !unavailableNow[agent.id]);
+                if (potentialAgents.length === 0) { setNotification({ show: true, message: `No available agents found for ${sbr}.`, type: 'error' }); setSuggestedAgentId(null); return; }
+                const countsForHour = ticketCounts[selectedHour] || {};
+                const minTickets = Math.min(...potentialAgents.map(a => countsForHour[a.id] || 0));
+                const tiedAgents = potentialAgents.filter(a => (countsForHour[a.id] || 0) === minTickets).sort((a,b)=> a.name.localeCompare(b.name));
+                const lastIndex = roundRobinIndex[sbr] || 0;
+                const suggestedAgent = tiedAgents[lastIndex % tiedAgents.length];
+                setSuggestedAgentId(suggestedAgent.id);
+                updateTriageState({ roundRobinIndex: { ...roundRobinIndex, [sbr]: lastIndex + 1 } });
+            };
+
+            const handleAssignTicket = (agentId) => {
+                if (!selectedHour) return;
+                const agent = agents.find(a => a.id === agentId);
+                if (!agent) return;
+                const dailyRole = schedule.availability.find(a => a.name === agent.name)?.role;
+                const currentCounts = ticketCounts?.[selectedHour] || {};
+                const newCount = (currentCounts[agentId] || 0) + 1;
+                const newTicketCounts = { ...ticketCounts, [selectedHour]: { ...currentCounts, [agentId]: newCount } };
+                const updates = { ticketCounts: newTicketCounts };
+                if (dailyRole === 'L1' || dailyRole === 'L2') {
+                    const currentLastAssigned = triageState.lastAssigned || {};
+                    const newLastAssignedForHour = { ...(currentLastAssigned[selectedHour] || {}), [dailyRole]: agent.id };
+                    updates.lastAssigned = { ...currentLastAssigned, [selectedHour]: newLastAssignedForHour };
+                }
+                updateTriageState(updates);
+                setSuggestedAgentId(null); setSelectedSbr(null);
+            };
+
+            const handleToggleUnavailability = (agentId, isCurrentlyUnavailable) => {
+                if (!selectedHour) return;
+                if (isCurrentlyUnavailable) {
+                    const newUnavailableAssistants = {...unavailableAssistants};
+                    if(newUnavailableAssistants[selectedHour]) delete newUnavailableAssistants[selectedHour][agentId];
+                    updateTriageState({ unavailableAssistants: newUnavailableAssistants });
+                } else {
+                    setUnavailabilityInput({ agentId, minutes: '15' });
+                }
+            };
+            
+            const handleSetUnavailability = (agentId) => {
+                const minutes = parseInt(unavailabilityInput.minutes, 10);
+                if (isNaN(minutes) || minutes <= 0) { setNotification({ show: true, message: "Please enter valid minutes.", type: 'error' }); return; }
+                const availableAgainTimestamp = Date.now() + minutes * 60 * 1000;
+                const hourUnavailable = {...(unavailableAssistants[selectedHour] || {}), [agentId]: availableAgainTimestamp};
+                updateTriageState({ unavailableAssistants: { ...unavailableAssistants, [selectedHour]: hourUnavailable } });
+                setUnavailabilityInput({ agentId: null, minutes: '15' });
+            };
+                
+            const lastAssigned = triageState?.lastAssigned?.[selectedHour] || {};
+            const lastL1Agent = agents.find(a => a.id === lastAssigned.L1)?.name || 'N/A';
+            const lastL2Agent = agents.find(a => a.id === lastAssigned.L2)?.name || 'N/A';
+            const copyText = `Last assigned L1: ${lastL1Agent}\nLast assigned L2: ${lastL2Agent}`;
+            const handleCopy = () => { try { navigator.clipboard.writeText(copyText); setNotification({show:true, message: 'Copied!', type:'success'}); } catch (err) { setNotification({show:true, message: 'Failed to copy!', type:'error'}); } };
+
+            return (
+                <div className="space-y-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card title="Triage by Hour" icon={<CalendarIcon/>}>
+                            <div className="flex flex-wrap gap-2">{sortedTriageSlots.map(hour => { const slotTotal = Object.values(ticketCounts?.[hour] || {}).reduce((sum, count) => sum + count, 0); return (<button key={hour} onClick={() => { setSelectedHour(hour); setSuggestedAgentId(null); setSelectedSbr(null); }} className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors flex items-center gap-2 ${selectedHour === hour ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}>{hour} ({triageSlots[hour]}){slotTotal > 0 && <span className="text-xs font-bold bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full">{slotTotal}</span>}</button>);})}</div>
+                        </Card>
+                        <Card title="Today's Triaging Summary" icon={<ListIcon/>}><div className="text-center"><p className="text-slate-500 text-sm">Overall Tickets Triaged</p><p className="text-4xl font-bold text-slate-800">{overallTriagedToday}</p></div></Card>
+                    </div>
+                    {selectedHour && sbrCoverageData.uncoveredBins.length > 0 && (<div className="p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded-r-lg shadow"><div className="flex items-center"><AlertTriangleIcon className="h-6 w-6 mr-3"/><div><p className="font-bold">Coverage Warning: No available agents for these SBR Bins in this slot:</p><p className="text-sm font-semibold">{sbrCoverageData.uncoveredBins.join(', ')}</p></div></div></div>)}
+                    {selectedHour && (<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="md:col-span-1"><Card title="SBR Bins" icon={<ListIcon/>}><div className="flex flex-col space-y-2">{appConfig.sbrBins.map(bin => { const isSelectedSbr = bin === selectedSbr; const suggestedAgent = isSelectedSbr && suggestedAgentId ? agents.find(a => a.id === suggestedAgentId) : null; const coverage = sbrCoverageData.coverageDetails[bin] || { availableCount: 0 }; return (<div key={bin} className={`p-2 border rounded-lg transition-all flex justify-between items-center ${isSelectedSbr ? 'bg-sky-100 border-sky-400' : 'bg-white border-slate-200'}`}><div className="flex-grow">{suggestedAgent ? (<div className="flex justify-between items-center"><span className="font-semibold text-sm text-slate-700">{bin}</span><div className="flex items-center gap-2 bg-green-100 p-1 rounded-md"><span className="text-xs font-bold text-green-800">{suggestedAgent.name.split(' ')[0]}</span><button onClick={() => handleAssignTicket(suggestedAgentId)} className="bg-green-500 text-white rounded p-1 hover:bg-green-600"><AssignIcon /></button></div></div>) : (<button onClick={() => handleSbrClick(bin)} className="w-full text-left text-sm">{bin}</button>)}</div><div className="relative group ml-2"><span className={`px-2 py-0.5 text-xs font-bold rounded-full ${coverage.availableCount > 0 ? 'bg-slate-200 text-slate-700' : 'bg-red-200 text-red-800'}`}>{coverage.availableCount}</span><div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-slate-800 text-white text-xs rounded-lg shadow-lg p-3 z-50 hidden group-hover:block pointer-events-none"><h4 className="font-bold text-sm mb-2 border-b border-slate-600 pb-1">{bin}</h4><div><p className="font-semibold text-green-400">Available ({coverage.available.length})</p>{coverage.available.length > 0 ? <ul className="list-disc pl-4 text-slate-300">{coverage.available.map(name => <li key={name}>{name}</li>)}</ul> : <p className="text-slate-400 pl-4 text-xs">None</p>}</div><div className="mt-2"><p className="font-semibold text-yellow-400">On Call ({coverage.onCall.length})</p>{coverage.onCall.length > 0 ? <ul className="list-disc pl-4 text-slate-300">{coverage.onCall.map(name => <li key={name}>{name}</li>)}</ul> : <p className="text-slate-400 pl-4 text-xs">None</p>}</div><div className="mt-2"><p className="font-semibold text-purple-400">Triaging</p>{coverage.triaging ? <p className="pl-4 text-slate-300">{coverage.triaging}</p> : <p className="text-slate-400 pl-4 text-xs">None</p>}</div><div className="absolute left-1/2 -translate-x-1/2 bottom-[-5px] w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-slate-800"></div></div></div></div>);})}</div></Card></div>
+                        <div className="md:col-span-2"><Card title={`Available Agents for ${selectedHour}`} icon={<UsersIcon/>}><div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200"><div className="flex justify-between items-center"><div><p className="text-sm font-medium text-slate-700">Last assigned L1: <span className="font-bold text-indigo-600">{lastL1Agent}</span></p><p className="text-sm font-medium text-slate-700">Last assigned L2: <span className="font-bold text-indigo-600">{lastL2Agent}</span></p></div><button onClick={handleCopy} className="p-2 text-slate-500 hover:bg-slate-200 rounded-md"><CopyIcon className="h-5 w-5" /></button></div></div><div className="flex items-center gap-2 mb-4 p-2 bg-slate-100 rounded-md"><span className="text-sm font-semibold text-slate-600">Filter by role:</span>{['All', 'L1', 'L2', 'L2.5 & L3'].map(filter => (<button key={filter} onClick={() => setRoleFilter(filter)} className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${roleFilter === filter ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'}`}>{filter}</button>))}</div><div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">{filteredAgents.map(agent => { const unavailableUntil = unavailableAssistants?.[selectedHour]?.[agent.id]; const isUnavailable = unavailableUntil && unavailableUntil > currentTime; const isSettingUnavailability = unavailabilityInput.agentId === agent.id; const dailyRole = schedule.availability.find(a => a.name === agent.name)?.role; const isEligible = selectedSbr && agent.sbrBins.includes(selectedSbr); const isSuggested = suggestedAgentId === agent.id; return (<div key={agent.id} className={`p-4 rounded-lg flex flex-col justify-between transition-all ${isUnavailable ? 'bg-red-100 opacity-70' : isEligible && !isSuggested ? 'bg-sky-100' : 'bg-white'} ${isSuggested ? 'ring-2 ring-green-500 shadow-lg' : isEligible ? 'border-sky-300' : 'border-slate-200'} border`}><div><p className={`font-semibold text-slate-800 ${isUnavailable ? 'line-through' : ''}`}>{agent.name}</p><p className="text-xs text-slate-500 -mt-1 mb-2">{dailyRole}</p><div className="text-sm text-slate-500 flex items-center justify-between mt-1"><span>Tickets Assigned:</span><div className="flex items-center gap-1"><button onClick={() => handleManualTicketCountChange(agent.id, -1)} className="p-1 rounded-full bg-slate-200 hover:bg-slate-300 disabled:opacity-50" disabled={isUnavailable || (ticketCounts[selectedHour]?.[agent.id] || 0) === 0}> <MinusIcon /> </button><span className="font-bold text-slate-700 w-4 text-center">{(ticketCounts[selectedHour]?.[agent.id] || 0)}</span><button onClick={() => handleManualTicketCountChange(agent.id, 1)} className="p-1 rounded-full bg-slate-200 hover:bg-slate-300 disabled:opacity-50" disabled={isUnavailable}> <PlusIcon /> </button></div></div>{isUnavailable && <div className="mt-2 text-sm font-semibold text-red-600 flex items-center justify-center gap-2 bg-red-200 p-1 rounded-md"><ClockIcon/><span>{formatTimeLeft(unavailableUntil)}</span></div>}</div>{isSettingUnavailability ? (<div className="mt-3 space-y-2"><div className="flex items-center gap-2"><input type="number" value={unavailabilityInput.minutes} onChange={e => setUnavailabilityInput(s => ({...s, minutes: e.target.value}))} className="w-full p-1 border border-slate-300 rounded-md text-center"/><span className="text-sm text-slate-500">min</span></div><div className="flex items-center gap-2"><button onClick={() => handleSetUnavailability(agent.id)} className="flex-1 text-xs font-medium text-white bg-red-500 rounded-md hover:bg-red-600 py-1.5">Set</button><button onClick={() => setUnavailabilityInput({agentId: null, minutes: '15'})} className="flex-1 text-xs font-medium text-slate-700 bg-slate-200 rounded-md hover:bg-slate-300 py-1.5">Cancel</button></div></div>) : (<div className="flex items-center gap-2 mt-3"><button onClick={() => handleAssignTicket(agent.id)} disabled={isUnavailable} className="flex-1 text-center px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-slate-400"> Assign </button><button onClick={() => handleToggleUnavailability(agent.id, isUnavailable)} className={`px-2 py-1.5 text-xs font-medium rounded-md ${isUnavailable ? 'bg-yellow-500 text-white' : 'bg-slate-200 text-slate-800'}`}> {isUnavailable ? 'Available' : 'Unavailable'} </button></div>)}</div>);})}{filteredAgents.length === 0 && <p className="text-slate-500 md:col-span-2 xl:col-span-3">No agents available for assignment in this slot.</p>}</div></Card></div>
+                    </div>)}
+                    <Card title="Manual Triaging Summary" icon={<ListIcon />} isCollapsible={true} isVisible={isSummaryVisible} onToggle={() => setIsSummaryVisible(!isSummaryVisible)}><TriagingSummaryTable agents={agents} schedule={schedule} triageState={triageState} appConfig={appConfig} selectedHour={selectedHour} /></Card>
+                </div>
+            );
+        }
+        
+        function TriagingSummaryTable({ agents, schedule, triageState, appConfig, selectedHour }) {
+            const [sortConfig, setSortConfig] = React.useState({ key: 'name', direction: 'ascending' });
+            const sortedAgents = React.useMemo(() => {
+                if (!schedule || !triageState || !appConfig || !selectedHour) return [];
+                const presentAgents = agents.filter(agent => schedule.availability.find(a=>a.name === agent.name)?.status === 'Present');
+                let sortableAgents = [...presentAgents];
+                if (sortConfig.key !== null) {
+                    sortableAgents.sort((a, b) => {
+                        let aValue, bValue;
+                        if (sortConfig.key === 'name') { aValue = a.name; bValue = b.name; } 
+                        else if (sortConfig.key === 'role') { aValue = schedule.availability.find(s => s.name === a.name)?.role || ''; bValue = schedule.availability.find(s => s.name === b.name)?.role || ''; }
+                        else if (sortConfig.key === 'status') { const getStatus = (ag) => { if (schedule.triageSlots[selectedHour] === ag.name) return 'Triaging'; if (schedule.callSlots[selectedHour]?.includes(ag.name)) return 'On Call'; return 'Available'; }; aValue = getStatus(a); bValue = getStatus(b); }
+                        else { aValue = triageState.ticketCounts?.[selectedHour]?.[a.id] || 0; bValue = triageState.ticketCounts?.[selectedHour]?.[b.id] || 0; }
+                        if (aValue < bValue) { return sortConfig.direction === 'ascending' ? -1 : 1; }
+                        if (aValue > bValue) { return sortConfig.direction === 'ascending' ? 1 : -1; }
+                        return 0;
+                    });
+                }
+                return sortableAgents;
+            }, [agents, schedule, triageState, appConfig, selectedHour, sortConfig]);
+
+            if (!selectedHour) return <p className="text-center text-slate-500 py-4">Select a time slot to view a summary.</p>;
+
+            const requestSort = (key) => { let direction = 'ascending'; if (sortConfig.key === key && sortConfig.direction === 'ascending') direction = 'descending'; setSortConfig({ key, direction }); };
+            const getSortIcon = (key) => { if (sortConfig.key !== key) return <ChevronsUpDown />; if (sortConfig.direction === 'ascending') return <ChevronUpIcon className="h-4 w-4" />; return <ChevronDownIcon className="h-4 w-4" />; };
+            
+            const presentAgents = agents.filter(agent => schedule.availability.find(a=>a.name === agent.name)?.status === 'Present');
+            const totalTicketsForSlot = presentAgents.reduce((acc, agent) => {
+                const isAvailable = !(schedule.triageSlots[selectedHour] === agent.name || schedule.callSlots[selectedHour]?.includes(agent.name));
+                return acc + (isAvailable ? (triageState.ticketCounts?.[selectedHour]?.[agent.id] || 0) : 0);
+            }, 0);
+
+            return (<div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-200"><thead className="bg-slate-50"><tr><th className="px-4 py-3 text-left text-xs font-medium uppercase">S.No</th><th className="px-4 py-3 text-left text-xs font-medium uppercase"><button onClick={() => requestSort('name')} className="flex items-center gap-1">Name {getSortIcon('name')}</button></th><th className="px-4 py-3 text-left text-xs font-medium uppercase"><button onClick={() => requestSort('role')} className="flex items-center gap-1">Daily Role {getSortIcon('role')}</button></th><th className="px-4 py-3 text-center text-xs font-medium uppercase"><button onClick={() => requestSort('status')} className="flex items-center gap-1 mx-auto">Status {getSortIcon('status')}</button></th><th className="px-4 py-3 text-center text-xs font-medium uppercase"><button onClick={() => requestSort('tickets')} className="flex items-center gap-1 mx-auto">Tickets Assigned {getSortIcon('tickets')}</button></th></tr></thead><tbody className="bg-white divide-y divide-slate-200">{sortedAgents.map((agent, index) => { let statusInSlot, ticketsInSlot; const dailyRole = schedule.availability.find(a => a.name === agent.name)?.role || agent.role; if (schedule.triageSlots[selectedHour] === agent.name) { statusInSlot = <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Triaging</span>; ticketsInSlot = 'N/A'; } else if (schedule.callSlots[selectedHour]?.includes(agent.name)) { statusInSlot = <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">On Call</span>; ticketsInSlot = 'N/A'; } else { statusInSlot = <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Available</span>; ticketsInSlot = triageState.ticketCounts?.[selectedHour]?.[agent.id] || 0; } return (<tr key={agent.id} className="hover:bg-slate-50"><td className="px-4 py-4">{index + 1}</td><td className="px-4 py-4 font-medium">{agent.name}</td><td className="px-4 py-4">{dailyRole}</td><td className="px-4 py-4 text-center">{statusInSlot}</td><td className="px-4 py-4 font-bold text-center">{ticketsInSlot}</td></tr>);})}</tbody><tfoot className="bg-slate-100"><tr><td colSpan="4" className="px-4 py-3 text-right font-bold">Total Tickets for Slot</td><td className="px-4 py-3 text-center font-bold">{totalTicketsForSlot}</td></tr></tfoot></table></div>);
+        }
+        
+        function SettingsModal({ onClose, agents, appConfig, setNotification, onEditAgent, onAddAgent, onDeleteAgent, onConfigUpdate, onAppConfigUpdate, onAgentsUpdate }) {
+             const [activeTab, setActiveTab] = React.useState('roster');
+
+            const renderContent = () => {
+                switch(activeTab) {
+                    case 'roster': 
+                        return <AgentRoster agents={agents} onEdit={onEditAgent} onAdd={onAddAgent} onDelete={onDeleteAgent} setNotification={setNotification} />;
+                    case 'requirements':
+                        return <CallRequirementsSettings appConfig={appConfig} setNotification={setNotification} onConfigUpdate={onConfigUpdate} />;
+                    case 'config':
+                        return <ConfigurationManagement agents={agents} appConfig={appConfig} setNotification={setNotification} onAppConfigUpdate={onAppConfigUpdate} onAgentsUpdate={onAgentsUpdate} />;
+                    case 'about':
+                        return <AboutAndChangelog />;
+                    default:
+                        return null;
+                }
+            }
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-60 z-40 flex justify-center items-center p-4">
+                    <div className="bg-slate-50 rounded-lg shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col">
+                        <header className="flex justify-between items-center p-4 border-b border-slate-200 bg-white rounded-t-lg">
+                            <h2 className="text-xl font-bold text-slate-800">Application Settings</h2>
+                            <button onClick={onClose} className="p-2 rounded-full text-slate-500 hover:bg-slate-100"><XIcon /></button>
+                        </header>
+                        <div className="flex flex-1 overflow-hidden">
+                            <aside className="w-1/4 border-r border-slate-200 bg-white p-4">
+                                <nav className="flex flex-col gap-2">
+                                <button onClick={() => setActiveTab('roster')} className={`w-full text-left p-2 rounded-md font-semibold text-sm ${activeTab === 'roster' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}>Agent Roster</button>
+                                <button onClick={() => setActiveTab('requirements')} className={`w-full text-left p-2 rounded-md font-semibold text-sm ${activeTab === 'requirements' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}>Call Requirements</button>
+                                <button onClick={() => setActiveTab('config')} className={`w-full text-left p-2 rounded-md font-semibold text-sm ${activeTab === 'config' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}>Configuration File</button>
+                                <button onClick={() => setActiveTab('about')} className={`w-full text-left p-2 rounded-md font-semibold text-sm ${activeTab === 'about' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}>About & Changelog</button>
+                                </nav>
+                            </aside>
+                            <main className="flex-1 p-6 overflow-y-auto">{renderContent()}</main>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function CallRequirementsSettings({ appConfig, setNotification, onConfigUpdate }) {
+            const [requirements, setRequirements] = React.useState(JSON.parse(JSON.stringify(appConfig.callRequirements)));
+            
+            const handleChange = (dayType, slot, value) => {
+                const numValue = parseInt(value, 10);
+                if (value === '' || (!isNaN(numValue) && numValue >= 0)) {
+                    setRequirements(prev => ({...prev, [dayType]: {...prev[dayType], [slot]: value === '' ? 0 : numValue}}));
+                }
+            };
+            
+            const handleSave = () => {
+                onConfigUpdate({...appConfig, callRequirements: requirements});
+                setNotification({ show: true, message: 'Call requirements updated successfully!', type: 'success' });
+            };
+
+            // JSX for this component...
+            return (
+                <div className="space-y-6">
+                    <h3 className="text-lg font-semibold text-slate-800">Default Call Slot Requirements</h3>
+                    <p className="text-sm text-slate-500 -mt-4">These are the defaults used when generating a new schedule.</p>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <Card title="Weekday" icon={<ListIcon/>}>
+                           <div className="space-y-3">{appConfig.timeSlots.calls.map(slot => (<div key={slot} className="grid grid-cols-2 items-center gap-4"><label className="text-sm font-medium text-slate-700">{slot}</label><input type="number" min="0" value={requirements.weekday[slot] || 0} onChange={e => handleChange('weekday', slot, e.target.value)} className="w-full border-slate-300 rounded-md shadow-sm p-2 text-center" /></div>))}</div>
+                        </Card>
+                         <Card title="Weekend" icon={<ListIcon/>}>
+                           <div className="space-y-3">{appConfig.timeSlots.calls.map(slot => (<div key={slot} className="grid grid-cols-2 items-center gap-4"><label className="text-sm font-medium text-slate-700">{slot}</label><input type="number" min="0" value={requirements.weekend[slot] || 0} onChange={e => handleChange('weekend', slot, e.target.value)} className="w-full border-slate-300 rounded-md shadow-sm p-2 text-center" /></div>))}</div>
+                        </Card>
+                    </div>
+                    <div className="flex justify-end mt-6"><button onClick={handleSave} className="flex items-center gap-2 bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700"><SaveIcon /> Save Changes</button></div>
+                </div>
+            );
+        }
+        
+        // --- Simplified or identical components ---
+        function CoverageWarningModal({ gaps, onProceed, onCancel }) { return ( <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4"><div className="bg-white rounded-lg shadow-xl w-full max-w-lg"><div className="p-6"><div className="flex items-start"><div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10"><AlertTriangleIcon className="h-6 w-6 text-yellow-600" /></div><div className="ml-4 text-left"><h3 className="text-lg leading-6 font-bold text-slate-900">Schedule Coverage Warning</h3><p className="mt-2 text-sm text-slate-600">The generated schedule leaves some SBR Bins without any available agents during certain times. This could lead to delayed ticket responses.</p></div></div><div className="mt-4 max-h-48 overflow-y-auto bg-slate-50 p-3 rounded-md border border-slate-200"><h4 className="text-sm font-semibold text-slate-700 mb-2">Detected Gaps:</h4><ul className="list-disc pl-5 space-y-1">{gaps.map((gap, index) => ( <li key={index} className="text-sm text-slate-600"><span className="font-semibold">{gap.sbr}</span>: <span className="text-indigo-600 font-medium">{gap.slot}</span></li> ))}</ul></div></div><div className="bg-slate-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-lg"><button type="button" onClick={onProceed} className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-yellow-500 text-base font-medium text-white hover:bg-yellow-600 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">Proceed Anyway</button><button type="button" onClick={onCancel} className="mt-3 w-full inline-flex justify-center rounded-md border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">Cancel</button></div></div></div> ); }
+        function DateNavigator({ selectedDate, onDateChange }) { const changeDate = (d) => { const n = new Date(selectedDate); n.setDate(n.getDate()+d); onDateChange(n); }; const y=selectedDate.getFullYear(), m=String(selectedDate.getMonth()+1).padStart(2,'0'), d=String(selectedDate.getDate()).padStart(2,'0'); return ( <div className="flex items-center gap-2 bg-white p-1 rounded-lg shadow-md border border-slate-200"><button onClick={() => changeDate(-1)} className="p-2 rounded-md hover:bg-slate-100 text-slate-600"><ChevronLeftIcon /></button><label className="relative flex items-center gap-2 text-center px-2 py-1 rounded-md hover:bg-slate-100 cursor-pointer"><CalendarIcon className="w-5 h-5 text-slate-500" /><div><div className="font-bold text-slate-800">{selectedDate.toLocaleDateString('en-US', { weekday: 'short' })}</div><div className="text-sm text-slate-500">{selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div></div><input type="date" value={`${y}-${m}-${d}`} onChange={(e) => onDateChange(new Date(e.target.value+'T00:00:00'))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" /></label><button onClick={() => changeDate(1)} className="p-2 rounded-md hover:bg-slate-100 text-slate-600"><ChevronRightIcon /></button><button onClick={() => onDateChange(new Date())} className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 px-3">Today</button></div> ); }
+        function ManualSlotEditor({ value, options, onChange }) { return (<select value={value} onChange={e => onChange(e.target.value)} className="w-full bg-transparent border-none rounded-md p-1 focus:ring-2 focus:ring-indigo-500">{value && !options.includes(value) && <option key={value} value={value}>{value}</option>}<option value="UNASSIGNED">UNASSIGNED</option>{options.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select>); }
+        function CTSlotsTable({ schedule, selectedDate, appConfig }) { if (!schedule?.callSlots || !appConfig) return <p className="text-slate-500">Call slots data not available.</p>; const mRows = ['M1', 'M2', 'M3', 'M4']; return (<div className="overflow-x-auto"><table className="min-w-full border-collapse border border-black"><thead><tr><th className="border border-black px-2 py-1 text-white font-bold text-sm" style={{backgroundColor:'#00b050'}}>Date: {selectedDate.toLocaleDateString('en-GB')}</th>{appConfig.timeSlots.calls.map(slot => <th key={slot} className="border border-black px-2 py-1 text-white font-bold text-sm" style={{backgroundColor:'#00b050'}}>{slot}</th>)}</tr></thead><tbody>{mRows.map((rowLabel, rIdx) => (<tr key={rowLabel}><td className="border border-black px-2 py-1 text-black font-bold">{rowLabel}</td>{appConfig.timeSlots.calls.map(slot => <td key={`${slot}-${rowLabel}`} className="border border-black px-2 py-1 text-black">{schedule.callSlots[slot]?.[rIdx] === 'UNASSIGNED' ? '' : schedule.callSlots[slot]?.[rIdx] || ''}</td>)}</tr>))}</tbody></table></div>); }
+        function DailyPlanner({ agents, dailyStatus, setDailyStatus, onGenerateClick, dayName, dailyRoles, setDailyRoles }) { const [isQuickUpdateVisible, setIsQuickUpdateVisible] = React.useState(false); const [pastedNames, setPastedNames] = React.useState(''); const sortedAgents = React.useMemo(() => [...agents].sort((a, b) => (dailyStatus[a.id]==='Present'? -1 : 1) || a.name.localeCompare(b.name)), [agents, dailyStatus]); const handleUpdateFromPaste = () => { const names = new Set(pastedNames.split('\n').map(n => n.trim().toLowerCase()).filter(Boolean)); setDailyStatus(agents.reduce((acc, agent) => ({...acc, [agent.id]: names.has(agent.name.toLowerCase()) ? 'Present' : 'Absent'}), {})); }; const getStatusColor = s => ({Present:'bg-green-100 text-green-800', Absent:'bg-red-100 text-red-800'})[s] || 'bg-slate-100 text-slate-800'; return (<div className="space-y-8"><Card title="Quick Update from List" icon={<ListIcon />} isCollapsible={true} isVisible={isQuickUpdateVisible} onToggle={() => setIsQuickUpdateVisible(!isQuickUpdateVisible)}><p className="text-sm text-slate-500 mb-3">Paste a list of available agents (one per line). They will be marked 'Present' and others 'Absent'.</p><textarea rows="5" className="w-full p-2 border border-slate-300 rounded-md shadow-sm" placeholder="Agent One..." value={pastedNames} onChange={e => setPastedNames(e.target.value)} /><button onClick={handleUpdateFromPaste} className="mt-3 bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700">Update Availability</button></Card><Card title="Set Daily Availability" icon={<CalendarIcon />}><div className="flex justify-end mb-4"><button onClick={onGenerateClick} className="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-green-700 w-full sm:w-auto">Generate Schedule</button></div><div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-200"><thead className="bg-slate-50"><tr><th className="px-6 py-2 text-left text-xs font-medium text-slate-500 uppercase">Agent</th><th className="px-6 py-2 text-left text-xs font-medium text-slate-500 uppercase">Temporary Role</th><th className="px-6 py-2 text-left text-xs font-medium text-slate-500 uppercase">Status for {dayName}</th></tr></thead><tbody className="bg-white divide-y divide-slate-200">{sortedAgents.map(agent => (<tr key={agent.id}><td className="px-6 py-2 whitespace-nowrap text-sm font-medium">{agent.name}</td><td className="px-6 py-4 whitespace-nowrap"><div className="flex items-center gap-x-4 text-sm">{['L1', 'L2', 'L2.5', 'L3'].map(role => (<div key={role} className="flex items-center"><input id={`r-${agent.id}-${role}`} name={`r-${agent.id}`} type="radio" checked={dailyRoles[agent.id] === role} onChange={() => setDailyRoles(p => ({ ...p, [agent.id]: role }))} className="h-4 w-4 border-slate-300 text-indigo-600 focus:ring-indigo-500" /><label htmlFor={`r-${agent.id}-${role}`} className="ml-2 block">{role}</label></div>))}</div></td><td className="px-6 py-2 whitespace-nowrap"><select value={dailyStatus[agent.id] || ''} onChange={e => setDailyStatus(p => ({...p, [agent.id]: e.target.value}))} className={`w-full p-1.5 border-slate-300 rounded-md ${getStatusColor(dailyStatus[agent.id])}`}><option>Present</option><option>Absent</option><option>Week Off</option></select></td></tr>))}</tbody></table></div></Card></div>); }
+        function AgentRoster({ agents, onEdit, onAdd, onDelete, setNotification }) { return (<div className="space-y-6"><div className="flex justify-between items-center"><h3 className="text-lg font-semibold text-slate-800">Manage Agents</h3><button onClick={onAdd} className="flex items-center gap-2 bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700"><UserPlusIcon /> Add Agent</button></div><Card title="Agent List" icon={<UsersIcon />}><div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-200"><thead className="bg-slate-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Name</th><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Role</th><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Eligibility</th><th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Week Offs</th><th className="relative px-6 py-3"><span className="sr-only">Actions</span></th></tr></thead><tbody className="bg-white divide-y divide-slate-200">{agents.map(agent => (<tr key={agent.id}><td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{agent.name}</td><td className="px-6 py-4 whitespace-nowrap text-sm">{agent.role}</td><td className="px-6 py-4 whitespace-nowrap text-sm"><div className="flex flex-col space-y-1">{agent.isCallEligible && <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Calls</span>}{agent.isTriageEligible && <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">Triage</span>}</div></td><td className="px-6 py-4 whitespace-nowrap text-sm">{agent.weekOffs?.join(', ') || 'None'}</td><td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2"><button onClick={() => onEdit(agent)} className="text-indigo-600 hover:text-indigo-900"><EditIcon /></button><button onClick={() => onDelete(agent)} className="text-red-600 hover:text-red-900"><TrashIcon /></button></td></tr>))}</tbody></table></div></Card></div>); }
+        function AgentModal({ agent, onSave, onClose, appConfig }) { const [formData, setFormData] = React.useState({ id: null, name: '', role: 'L1', weekOffs: [], isCallEligible: false, isTriageEligible: false, alwaysTriage: false, sbrBins: [] }); React.useEffect(() => { if (agent) setFormData({ ...agent, sbrBins: agent.sbrBins || [] }); }, [agent]); const handleChange = e => { const { name, value, type, checked } = e.target; setFormData(p => ({...p, [name]: type === 'checkbox' ? checked : value})); }; const handleWeekOffChange = d => setFormData(p => ({...p, weekOffs: p.weekOffs.includes(d) ? p.weekOffs.filter(i => i !== d) : [...p.weekOffs, d]})); const handleSbrChange = b => setFormData(p => ({...p, sbrBins: p.sbrBins.includes(b) ? p.sbrBins.filter(i => i !== b) : [...p.sbrBins, b]})); const handleSubmit = e => { e.preventDefault(); if (!formData.name) return; onSave(formData); }; return (<div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"><div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-full overflow-y-auto"><form onSubmit={handleSubmit}><div className="p-6"><div className="flex justify-between items-center mb-4"><h3 className="text-xl font-semibold">{agent ? 'Edit Agent' : 'Add New Agent'}</h3><button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600"><XIcon /></button></div><div className="space-y-4"><div><label className="block text-sm font-medium">Name</label><input type="text" name="name" value={formData.name} onChange={handleChange} required className="mt-1 block w-full border border-slate-300 rounded-md p-2"/></div><div><label className="block text-sm font-medium">Role</label><select name="role" value={formData.role} onChange={handleChange} className="mt-1 block w-full p-2 border-slate-300 rounded-md"><option>L1</option><option>L2</option><option>L2.5</option><option>L3</option></select></div><div><span className="block text-sm font-medium">Week Offs</span><div className="mt-2 grid grid-cols-4 sm:grid-cols-7 gap-2">{DAYS_OF_WEEK.map(day => (<label key={day} className={`text-center text-sm border rounded-md py-2 px-3 cursor-pointer ${formData.weekOffs.includes(day) ? 'bg-indigo-600 text-white' : 'bg-white'}`}><input type="checkbox" checked={formData.weekOffs.includes(day)} onChange={() => handleWeekOffChange(day)} className="sr-only" />{day.substring(0,3)}</label>))}</div></div><div><span className="block text-sm font-medium">Eligibility</span><div className="mt-2 space-y-2"><div><label className="flex items-center"><input type="checkbox" name="isCallEligible" checked={formData.isCallEligible} onChange={handleChange} className="h-4 w-4 text-indigo-600 rounded mr-2"/>Eligible for Calls</label></div><div><label className="flex items-center"><input type="checkbox" name="isTriageEligible" checked={formData.isTriageEligible} onChange={handleChange} className="h-4 w-4 text-indigo-600 rounded mr-2"/>Eligible for Triaging</label></div><div><label className="flex items-center"><input type="checkbox" name="alwaysTriage" checked={formData.alwaysTriage} onChange={handleChange} className="h-4 w-4 text-indigo-600 rounded mr-2"/>Always Triage</label></div></div></div><div><span className="block text-sm font-medium">SBR Bins</span><div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2">{appConfig?.sbrBins.map(bin => (<label key={bin} className="flex items-center text-sm"><input type="checkbox" checked={formData.sbrBins.includes(bin)} onChange={() => handleSbrChange(bin)} className="h-4 w-4 text-indigo-600 rounded mr-2" />{bin}</label>))}</div></div></div></div><div className="bg-slate-50 px-6 py-3 flex justify-end gap-3"><button type="submit" className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg">Save</button><button type="button" onClick={onClose} className="bg-white border border-slate-300 font-semibold py-2 px-4 rounded-lg">Cancel</button></div></form></div></div>); }
+        function CallRequirementsModal({ onClose, onGenerate, dayName, appConfig }) { const getInitial = React.useCallback(() => { const dayType = (dayName === 'Saturday' || dayName === 'Sunday') ? 'weekend' : 'weekday'; return appConfig.timeSlots.calls.reduce((acc, slot) => ({...acc, [slot]: appConfig.callRequirements[dayType][slot] || 0}), {}); }, [dayName, appConfig]); const [reqs, setReqs] = React.useState(getInitial()); const handleChange = (s, v) => { const n = parseInt(v, 10); if (v === '' || (!isNaN(n) && n >= 0)) setReqs(p => ({...p, [s]: v === '' ? '' : n})); }; const handleSubmit = e => { e.preventDefault(); onGenerate(Object.entries(reqs).reduce((a,[k,v]) => ({...a,[k]:v===''?0:v}),{})); }; return ( <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4"><div className="bg-white rounded-lg shadow-xl w-full max-w-md"><form onSubmit={handleSubmit}><div className="p-6"><h3 className="text-lg font-medium">Set Call Slot Requirements for {dayName}</h3><div className="space-y-4 mt-4">{Object.keys(reqs).map(slot => (<div key={slot} className="grid grid-cols-2 items-center gap-4"><label className="text-sm font-medium">{slot}</label><input type="number" min="0" value={reqs[slot]} onChange={e => handleChange(slot, e.target.value)} className="w-full border-slate-300 rounded-md p-2 text-center" /></div>))}</div></div><div className="bg-slate-50 px-6 py-3 flex justify-end gap-3"><button type="submit" className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg">Generate</button><button type="button" onClick={onClose} className="bg-white border border-slate-300 font-semibold py-2 px-4 rounded-lg">Cancel</button></div></form></div></div> ); }
+        function DeleteConfirmationModal({ agent, onConfirm, onCancel }) { if (!agent) return null; return ( <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4"><div className="bg-white rounded-lg shadow-xl w-full max-w-md"><div className="p-6 text-center"><AlertTriangleIcon className="h-12 w-12 text-red-500 mx-auto"/><h3 className="text-lg font-bold mt-2">Delete Agent</h3><p className="mt-2 text-sm text-slate-600">Are you sure you want to delete <span className="font-semibold">{agent.name}</span>? This is permanent.</p></div><div className="bg-slate-50 px-6 py-3 flex justify-center gap-3"><button onClick={onConfirm} className="bg-red-600 text-white font-semibold py-2 px-4 rounded-lg">Confirm</button><button onClick={onCancel} className="bg-white border border-slate-300 font-semibold py-2 px-4 rounded-lg">Cancel</button></div></div></div> ); }
+        function ConfigurationManagement({ agents, appConfig, setNotification, onAppConfigUpdate, onAgentsUpdate }) { 
+            const fileInputRef = React.useRef(null); 
+            const handleDownload = () => { 
+                if (!appConfig || !agents) return; 
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ ...appConfig, agents: agents.map(({id, ...rest})=>rest) }, null, 2)); 
+                const a = document.createElement('a'); 
+                a.href = dataStr; 
+                a.download = "support_scheduler_config.json"; 
+                a.click(); 
+                a.remove(); 
+            }; 
+            const handleUpload = (e) => { 
+                const file = e.target.files[0]; 
+                if (!file) return; 
+                const reader = new FileReader(); 
+                reader.onload = event => { 
+                    try { 
+                        const uploadedData = JSON.parse(event.target.result);
+                        if (!uploadedData.agents || !Array.isArray(uploadedData.agents) || !uploadedData.sbrBins) {
+                            throw new Error("Invalid or incomplete configuration file.");
+                        }
+                        const { agents: uploadedAgents, ...newAppConfig } = uploadedData;
+                        const agentsWithIds = uploadedAgents.map((agent, index) => ({
+                            ...agent,
+                            id: `agent-${Date.now()}-${index}`
+                        }));
+                        onAppConfigUpdate(newAppConfig);
+                        onAgentsUpdate(agentsWithIds);
+                        setNotification({ show: true, message: 'Configuration successfully loaded for this session!', type: 'success' });
+                    } catch (err) { 
+                        console.error("Upload error:", err);
+                        setNotification({ show: true, message: `Upload failed: ${err.message}`, type: 'error' });
+                    } finally {
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                    }
+                }; 
+                reader.readAsText(file); 
+            }; 
+            return (
+                <div className="space-y-8">
+                    <div>
+                        <h3 className="text-lg font-semibold">Download Configuration</h3>
+                        <button onClick={handleDownload} className="flex items-center gap-2 bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg mt-2">
+                            <DownloadIcon /> Download
+                        </button>
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-semibold">Upload Configuration</h3>
+                        <p className="text-sm text-slate-500 mt-1 mb-3">
+                            Load a configuration file. Changes will only apply to your current session and will be lost on page reload.
+                        </p>
+                        <input type="file" id="configFile" ref={fileInputRef} accept=".json" onChange={handleUpload} className="hidden" />
+                        <label htmlFor="configFile" className="flex items-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg cursor-pointer w-fit">
+                            <UploadIcon /> Upload
+                        </label>
+                    </div>
+                </div>
+            ); 
+        }
+        function AboutAndChangelog() { return (<div className="space-y-8"><section> <h3 className="text-xl font-bold">About This App</h3> <p>This is a portable, offline version of the Support Shift Scheduler. It allows for complete schedule generation and management without needing an internet connection or database. All data is stored in your browser's memory and will reset when you close or refresh the page.</p> </section><section> <h3 className="text-xl font-bold">Changelog</h3> <p>v2.0.0 - Standalone HTML Version: Converted the application to a single, self-contained HTML file. Removed all database and AI dependencies for offline use.</p> </section></div>); }
+        function Card({ title, icon, children, isCollapsible = false, isVisible, onToggle, headerActions }) { return ( <div className="bg-white rounded-lg shadow-lg"><div className="p-5 border-b border-slate-200 flex items-center justify-between"><div className="flex items-center space-x-3"><div className="text-indigo-500">{React.cloneElement(icon, { className: "h-6 w-6" })}</div><h3 className="text-lg font-semibold text-slate-800">{title}</h3></div><div className="flex items-center gap-2">{headerActions}{isCollapsible && (<button onClick={onToggle} className="text-slate-500 hover:text-slate-700">{isVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}</button>)}</div></div>{(!isCollapsible || isVisible) && <div className="p-5">{children}</div>}</div> ); }
+
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
